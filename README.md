@@ -2,34 +2,6 @@
 
 A Paper plugin that adds the **Fhulker**: a shulker box with 54 slots (a double chest's worth) instead of 27. Regular shulker boxes are left completely vanilla.
 
-## Requirements
-
-- Paper (or a Paper fork such as Purpur) 26.2, built against the Paper 26.2 API
-- Java 25
-
-## Installation
-
-Drop the plugin jar into your server's `plugins/` folder and restart. There is no configuration file.
-
-## Building
-
-```
-mvn package
-```
-
-The jar is written to `target/Fhulkers-1.0.0-SNAPSHOT.jar`. Pass `-Drevision=1.2.3` to build a specific version.
-
-## Releases
-
-Releases are built by GitHub Actions and attached to the repo's Releases page. Versions follow [semantic versioning](https://semver.org/).
-
-- **Automatic:** run the *Release* workflow from the Actions tab (on `master`) and choose `patch`, `minor` or `major`. It increments the latest `vX.Y.Z` tag, builds the jar, then tags and publishes the release. The first release is `1.0.0`.
-- **Manual tag:** pushing a tag like `v1.2.0` releases exactly that version.
-
-## Test builds
-
-Every push to a branch other than `master` runs the *Snapshot* workflow, which builds a `-SNAPSHOT` jar (the next patch version, e.g. `1.0.1-SNAPSHOT`). Nothing is tagged or released: open the workflow run in the Actions tab and download the jar from **Artifacts**. Snapshot artifacts are kept for 14 days.
-
 ## Crafting
 
 Surround any shulker box with 8 copper ingots:
@@ -54,10 +26,33 @@ Notes:
 - Hoppers and hopper minecarts can't move items in or out of a Fhulker while a player has it open.
 - Items in the first 27 slots work with hoppers and comparators like a normal shulker box. Slots 28-54 are only reachable through the GUI.
 
-## How it works
+## Installation
+
+Requires Paper (or a Paper fork such as Purpur) 26.2 and Java 25.
+
+Drop the plugin jar into your server's `plugins/` folder and restart. There is no configuration file.
+
+## Development
+
+### Building
+
+```
+mvn package
+```
+
+The jar is written to `target/Fhulkers-1.0.0-SNAPSHOT.jar`. Pass `-Drevision=1.2.3` to build a specific version.
+
+### Releases
+
+Releases are built by GitHub Actions and attached to the repo's Releases page. Versions follow [semantic versioning](https://semver.org/).
+
+- **Automatic:** run the *Release* workflow from the Actions tab (on `master`) and choose `patch`, `minor` or `major`. It increments the latest `vX.Y.Z` tag, builds the jar, then tags and publishes the release. The first release is `1.0.0`.
+- **Manual tag:** pushing a tag like `v1.2.0` releases exactly that version.
+
+### Test builds
+
+Every push to a branch other than `master` runs the *Snapshot* workflow, which builds a `-SNAPSHOT` jar (the next patch version, e.g. `1.0.1-SNAPSHOT`). Nothing is tagged or released: open the workflow run in the Actions tab and download the jar from **Artifacts**. Snapshot artifacts are kept for 14 days.
+
+### How it works
 
 A Fhulker is an ordinary shulker box item or block with a `fhulkers:fhulker` marker in its persistent data. Slots 1-27 use the vanilla inventory (so hoppers, comparators, the tooltip, and dyeing keep working). Slots 28-54 are serialized next to the marker, and both move between the item and the block when it is placed or broken.
-
-## Upgrading from a version with `rows`
-
-Older versions had a `rows` option in `config.yml`. It has been removed and every Fhulker now has 54 slots. The old `config.yml` is ignored and can be deleted.
