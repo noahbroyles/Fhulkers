@@ -154,8 +154,11 @@ public final class Fhulkers extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPrepareCraft(PrepareItemCraftEvent e) {
-        if (!isOurRecipe(e.getRecipe())) return;
         CraftingInventory inv = e.getInventory();
+        if (!isOurRecipe(e.getRecipe())) {
+            keepFhulkerWhenDyeing(inv);
+            return;
+        }
         ItemStack box = null;
         for (ItemStack i : inv.getMatrix()) {
             if (isShulker(i)) { box = i; break; }
@@ -168,6 +171,19 @@ public final class Fhulkers extends JavaPlugin implements Listener {
         result.setAmount(1);
         markItem(result, null);
         inv.setResult(result);
+    }
+
+    /** Dyeing a Fhulker: vanilla previews a plain colored box, so rebuild the result as a Fhulker. */
+    private void keepFhulkerWhenDyeing(CraftingInventory inv) {
+        ItemStack result = inv.getResult();
+        if (!isShulker(result)) return;
+        for (ItemStack i : inv.getMatrix()) {
+            if (!isFhulkerItem(i)) continue;
+            ItemStack fixed = result.clone();
+            markItem(fixed, readExtra(i.getItemMeta().getPersistentDataContainer()));
+            inv.setResult(fixed);
+            return;
+        }
     }
 
     /** The crafter block skips PrepareItemCraftEvent and would output an empty box. */

@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  # Run from the Actions tab: picks the next version, tags it, and releases it.
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to increment
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+  # Or push a tag yourself (e.g. v1.2.0) to release exactly that version.
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # Manual runs only from master, so releases can't be cut from a feature branch.
+    if: github.ref == 'refs/heads/master' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need the existing tags to compute the next version
+
+      - name: Work out version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            latest=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+            if [ -z "$latest" ]; then
+              version="1.0.0" # first release
+            else
+              IFS=. read -r major minor patch <<< "${latest#v}"
+              case "$BUMP" in
+                major) version="$((major + 1)).0.0" ;;
+                minor) version="${major}.$((minor + 1)).0" ;;
+                *)     version="${major}.${minor}.$((patch + 1))" ;;
+              esac
+            fi
+          fi
+          echo "Releasing $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build
+        run: mvn -B -Drevision=${{ steps.version.outputs.version }} package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Fhulkers-${{ steps.version.outputs.version }}
+          path: target/Fhulkers-${{ steps.version.outputs.version }}.jar
+
+      - name: Create release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          args=(--title "Fhulkers $VERSION" --generate-notes)
+          # A pushed tag already exists; for manual runs this creates it at this commit.
+          [ "$GITHUB_REF_TYPE" = "tag" ] || args+=(--target "$GITHUB_SHA")
+          gh release create "v$VERSION" "target/Fhulkers-$VERSION.jar" "${args[@]}"

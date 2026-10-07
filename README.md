@@ -17,7 +17,14 @@ Drop the plugin jar into your server's `plugins/` folder and restart. There is n
 mvn package
 ```
 
-The jar is written to `target/Fhulkers-1.0.0.jar`.
+The jar is written to `target/Fhulkers-1.0.0-SNAPSHOT.jar`. Pass `-Drevision=1.2.3` to build a specific version.
+
+## Releases
+
+Releases are built by GitHub Actions and attached to the repo's Releases page. Versions follow [semantic versioning](https://semver.org/).
+
+- **Automatic:** run the *Release* workflow from the Actions tab (on `master`) and choose `patch`, `minor` or `major`. It increments the latest `vX.Y.Z` tag, builds the jar, then tags and publishes the release. The first release is `1.0.0`.
+- **Manual tag:** pushing a tag like `v1.2.0` releases exactly that version.
 
 ## Crafting
 
