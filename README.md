@@ -49,6 +49,8 @@ Releases are built by GitHub Actions and attached to the repo's Releases page. V
 - **Automatic:** run the *Release* workflow from the Actions tab (on `master`) and choose `patch`, `minor` or `major`. It increments the latest `vX.Y.Z` tag, builds the jar, then tags and publishes the release. The first release is `1.0.0`.
 - **Manual tag:** pushing a tag like `v1.2.0` releases exactly that version.
 
+Each release is also uploaded to [Hangar](https://hangar.papermc.io/) when the `HANGAR_API_KEY` repository secret is set (skipped otherwise). The Hangar project name and channel default to `Fhulkers` and `Release`; override them with the `HANGAR_PROJECT` and `HANGAR_CHANNEL` repository variables. The supported Paper versions are listed in the workflow (`PAPER_VERSIONS`).
+
 ### Test builds
 
 Every push to a branch other than `master` runs the *Snapshot* workflow, which builds a `-SNAPSHOT` jar (the next patch version, e.g. `1.0.1-SNAPSHOT`). Nothing is tagged or released: open the workflow run in the Actions tab and download the jar from **Artifacts**. Snapshot artifacts are kept for 14 days.
