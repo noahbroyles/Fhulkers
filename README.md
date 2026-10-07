@@ -56,3 +56,7 @@ Every push to a branch other than `master` runs the *Snapshot* workflow, which b
 ### How it works
 
 A Fhulker is an ordinary shulker box item or block with a `fhulkers:fhulker` marker in its persistent data. Slots 1-27 use the vanilla inventory (so hoppers, comparators, the tooltip, and dyeing keep working). Slots 28-54 are serialized next to the marker, and both move between the item and the block when it is placed or broken.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
