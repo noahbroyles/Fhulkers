@@ -24,7 +24,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # need the existing tags to compute the next version
 
@@ -51,7 +51,7 @@ jobs:
           echo "Releasing $version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
@@ -60,7 +60,7 @@ jobs:
       - name: Build
         run: mvn -B -Drevision=${{ steps.version.outputs.version }} package
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: Fhulkers-${{ steps.version.outputs.version }}
           path: target/Fhulkers-${{ steps.version.outputs.version }}.jar
