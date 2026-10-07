@@ -73,6 +73,7 @@ import java.util.UUID;
 public final class Fhulkers extends JavaPlugin implements Listener {
 
     private static final int VANILLA = 27;
+    private static final int SIZE = 54;
 
     private record BlockKey(UUID world, int x, int y, int z) {
         static BlockKey of(Block b) {
@@ -107,15 +108,11 @@ public final class Fhulkers extends JavaPlugin implements Listener {
     private NamespacedKey markerKey;
     private NamespacedKey extraKey;
     private NamespacedKey recipeKey;
-    private int size;
     private final Map<BlockKey, BoxHolder> sessions = new HashMap<>();
     private final Map<BlockKey, Pending> pendingDrops = new HashMap<>();
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
-        int rows = Math.max(4, Math.min(6, getConfig().getInt("rows", 6)));
-        size = rows * 9;
         markerKey = new NamespacedKey(this, "fhulker");
         extraKey = new NamespacedKey(this, "extra");
         recipeKey = new NamespacedKey(this, "fhulker");
@@ -209,27 +206,18 @@ public final class Fhulkers extends JavaPlugin implements Listener {
         if (h == null) {
             h = new BoxHolder(b);
             Component title = box.customName() != null ? box.customName() : Component.text("Fhulker");
-            h.inv = Bukkit.createInventory(h, size, title);
+            h.inv = Bukkit.createInventory(h, SIZE, title);
 
-            ItemStack[] contents = new ItemStack[size];
+            ItemStack[] contents = new ItemStack[SIZE];
             ItemStack[] vanilla = box.getSnapshotInventory().getContents();
             System.arraycopy(vanilla, 0, contents, 0, Math.min(VANILLA, vanilla.length));
 
-            List<ItemStack> overflow = new ArrayList<>();
             ItemStack[] extra = readExtra(box.getPersistentDataContainer());
-            for (int i = 0; i < extra.length; i++) {
-                if (isEmpty(extra[i])) continue;
-                int slot = VANILLA + i;
-                if (slot < size) contents[slot] = extra[i];
-                else overflow.add(extra[i]);
+            for (int i = 0; i < extra.length && VANILLA + i < SIZE; i++) {
+                if (!isEmpty(extra[i])) contents[VANILLA + i] = extra[i];
             }
             h.inv.setContents(contents);
             sessions.put(k, h);
-
-            if (!overflow.isEmpty()) { // rows was lowered in config
-                spill(b.getLocation(), overflow.toArray(ItemStack[]::new));
-                save(h);
-            }
             box.open(); // lid animation + sound
         }
         p.openInventory(h.inv);
@@ -468,11 +456,11 @@ public final class Fhulkers extends JavaPlugin implements Listener {
             for (ItemStack i : box.getInventory().getContents()) if (!isEmpty(i)) used++;
         }
         ItemStack[] stored = readExtra(pdc);
-        for (int i = 0; i < stored.length && VANILLA + i < size; i++) if (!isEmpty(stored[i])) used++;
-        int free = Math.max(0, size - used);
+        for (int i = 0; i < stored.length && VANILLA + i < SIZE; i++) if (!isEmpty(stored[i])) used++;
+        int free = Math.max(0, SIZE - used);
 
         m.itemName(Component.text("Fhulker"));
-        m.lore(List.of(Component.text(size + " slots, " + free + " free", NamedTextColor.GRAY)
+        m.lore(List.of(Component.text(SIZE + " slots, " + free + " free", NamedTextColor.GRAY)
                 .decoration(TextDecoration.ITALIC, false)));
         s.setItemMeta(m);
     }
