@@ -1,0 +1,55 @@
+name: Snapshot
+
+# Test builds for any branch except master. Nothing is tagged or released:
+# the jar is only attached to the workflow run (Actions tab -> run -> Artifacts).
+on:
+  push:
+    branches-ignore: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snapshot-${{ github.ref }}
+  cancel-in-progress: true # a newer push to the branch replaces the older build
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # need the existing tags to work out the next version
+
+      - name: Work out version
+        id: version
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          # Next patch after the latest release, e.g. v1.0.0 -> 1.0.1-SNAPSHOT.
+          latest=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+          if [ -z "$latest" ]; then
+            base="1.0.0"
+          else
+            IFS=. read -r major minor patch <<< "${latest#v}"
+            base="${major}.${minor}.$((patch + 1))"
+          fi
+          # Artifact names can't contain "/", which branch names often do.
+          safe_branch="${BRANCH//[^A-Za-z0-9._-]/-}"
+          echo "version=${base}-SNAPSHOT" >> "$GITHUB_OUTPUT"
+          echo "name=Fhulkers-${base}-SNAPSHOT-${safe_branch}-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build
+        run: mvn -B -Drevision=${{ steps.version.outputs.version }} package
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.version.outputs.name }}
+          path: target/Fhulkers-${{ steps.version.outputs.version }}.jar
+          retention-days: 14
