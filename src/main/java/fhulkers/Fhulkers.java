@@ -3,6 +3,7 @@ package fhulkers;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import io.papermc.paper.event.block.BlockBreakBlockEvent;
+import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -131,7 +132,7 @@ public final class Fhulkers extends JavaPlugin implements Listener {
         Bukkit.addRecipe(r);
 
         getServer().getPluginManager().registerEvents(this, this);
-        for (Player p : Bukkit.getOnlinePlayers()) p.discoverRecipe(recipeKey);
+        for (Player p : Bukkit.getOnlinePlayers()) unlockIfCarryingShulker(p);
     }
 
     @Override
@@ -151,7 +152,26 @@ public final class Fhulkers extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        e.getPlayer().discoverRecipe(recipeKey);
+        unlockIfCarryingShulker(e.getPlayer());
+    }
+
+    /** Like vanilla recipes, show the recipe once the player first holds a shulker box. */
+    @EventHandler
+    public void onSlotChange(PlayerInventorySlotChangeEvent e) {
+        Player p = e.getPlayer();
+        if (isShulker(e.getNewItemStack()) && !p.hasDiscoveredRecipe(recipeKey)) {
+            p.discoverRecipe(recipeKey);
+        }
+    }
+
+    private void unlockIfCarryingShulker(Player p) {
+        if (p.hasDiscoveredRecipe(recipeKey)) return;
+        for (ItemStack i : p.getInventory().getContents()) {
+            if (isShulker(i)) {
+                p.discoverRecipe(recipeKey);
+                return;
+            }
+        }
     }
 
     @EventHandler
