@@ -51,7 +51,7 @@ Releases are built by GitHub Actions and attached to the repo's Releases page. V
 
 Each release is also uploaded to [Hangar](https://hangar.papermc.io/) when the `HANGAR_API_KEY` repository secret is set (skipped otherwise). The Hangar project name and channel default to `Fhulkers` and `Release`; override them with the `HANGAR_PROJECT` and `HANGAR_CHANNEL` repository variables. The supported Paper versions are listed in the workflow (`PAPER_VERSIONS`).
 
-The same step replaces the Hangar project page with the top of this README (everything above "Development"), with images pointing at the release tag on GitHub, so edit the page here rather than in Hangar's editor. The images only load once the repository is public.
+The same step replaces the Hangar project page with the top of this README (everything above "Development"), with images pointing at the release tag on GitHub, so edit the page here rather than in Hangar's editor.
 
 ### Test builds
 

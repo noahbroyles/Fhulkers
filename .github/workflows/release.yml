@@ -134,7 +134,6 @@ jobs:
 
           # Everything above "## Development" (players' docs, not build notes), minus the
           # title Hangar already shows. Relative images point at this release's tag on GitHub.
-          # (They only load once the repository is public.)
           raw="https://raw.githubusercontent.com/$GITHUB_REPOSITORY/v$VERSION"
           awk '/^## Development/ { exit } { print }' README.md \
             | sed -e '1{/^# /d}' -e "s#](docs/#]($raw/docs/#g" > page.md
