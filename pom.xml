@@ -24,11 +24,12 @@
     </repositories>
 
     <dependencies>
-        <!-- Latest 26.2 build of the Paper API (Purpur 26.2 is built on it). -->
+        <!-- Paper API 26.2 (Purpur 26.2 is built on it). Pinned to an exact stable build:
+             the old range [26.2.build,26.3) also matched 26.3 pre-releases. -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>[26.2.build,26.3)</version>
+            <version>26.2.build.132-stable</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

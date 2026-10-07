@@ -73,3 +73,82 @@ jobs:
           # A pushed tag already exists; for manual runs this creates it at this commit.
           [ "$GITHUB_REF_TYPE" = "tag" ] || args+=(--target "$GITHUB_SHA")
           gh release create "v$VERSION" "target/Fhulkers-$VERSION.jar" "${args[@]}"
+
+      # Hangar has no "re-run just this step": if this fails, the GitHub release above
+      # already exists, so upload that jar to Hangar by hand instead of re-running the workflow.
+      - name: Publish to Hangar
+        env:
+          HANGAR_API_KEY: ${{ secrets.HANGAR_API_KEY }}
+          # Override in Settings -> Secrets and variables -> Actions -> Variables if these differ.
+          HANGAR_PROJECT: ${{ vars.HANGAR_PROJECT || 'Fhulkers' }}
+          HANGAR_CHANNEL: ${{ vars.HANGAR_CHANNEL || 'Release' }}
+          # Paper versions this build is tested on. Must be versions Hangar knows about.
+          PAPER_VERSIONS: '["26.2"]'
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$HANGAR_API_KEY" ]; then
+            echo "::notice::HANGAR_API_KEY is not set; skipping the Hangar upload."
+            exit 0
+          fi
+          api=https://hangar.papermc.io/api/v1
+
+          # Trade the API key for a short-lived JWT.
+          token=$(curl -fsS -X POST --url-query "apiKey=$HANGAR_API_KEY" "$api/authenticate" | jq -er .token)
+          echo "::add-mask::$token"
+
+          # Reuse the GitHub release notes as the Hangar changelog.
+          gh release view "v$VERSION" --json body --jq .body > notes.md
+
+          jq -n \
+            --arg version "$VERSION" \
+            --arg channel "$HANGAR_CHANNEL" \
+            --rawfile description notes.md \
+            --argjson paper "$PAPER_VERSIONS" \
+            '{
+              version: $version,
+              channel: $channel,
+              description: $description,
+              platformDependencies: {PAPER: $paper},
+              pluginDependencies: {PAPER: []},
+              files: [{platforms: ["PAPER"]}]
+            }' > versionUpload.json
+
+          curl -fsS -X POST "$api/projects/$HANGAR_PROJECT/upload" \
+            -H "Authorization: HangarAuth $token" \
+            -F "versionUpload=<versionUpload.json;type=application/json" \
+            -F "files=@target/Fhulkers-$VERSION.jar;type=application/java-archive" \
+            | jq -r '"Published to Hangar: " + .url'
+
+      # Replaces the whole Hangar project page. Edits made in Hangar's web editor are overwritten.
+      - name: Update Hangar project page
+        env:
+          HANGAR_API_KEY: ${{ secrets.HANGAR_API_KEY }}
+          HANGAR_PROJECT: ${{ vars.HANGAR_PROJECT || 'Fhulkers' }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$HANGAR_API_KEY" ]; then
+            echo "::notice::HANGAR_API_KEY is not set; skipping the Hangar page update."
+            exit 0
+          fi
+          api=https://hangar.papermc.io/api/v1
+
+          # Everything above "## Development" (players' docs, not build notes), minus the
+          # title Hangar already shows. Relative images point at this release's tag on GitHub.
+          # (They only load once the repository is public.)
+          raw="https://raw.githubusercontent.com/$GITHUB_REPOSITORY/v$VERSION"
+          awk '/^## Development/ { exit } { print }' README.md \
+            | sed -e '1{/^# /d}' -e "s#](docs/#]($raw/docs/#g" > page.md
+          if [ ! -s page.md ]; then
+            echo "::error::README produced an empty Hangar page"
+            exit 1
+          fi
+          jq -n --rawfile content page.md '{content: $content}' > page.json
+
+          token=$(curl -fsS -X POST --url-query "apiKey=$HANGAR_API_KEY" "$api/authenticate" | jq -er .token)
+          echo "::add-mask::$token"
+
+          curl -fsS -X PATCH "$api/pages/editmain/$HANGAR_PROJECT" \
+            -H "Authorization: HangarAuth $token" \
+            -H "Content-Type: application/json" \
+            --data @page.json > /dev/null
+          echo "Updated the Hangar project page."

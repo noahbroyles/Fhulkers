@@ -1,5 +1,7 @@
 name: Fhulkers
 version: ${project.version}
 main: fhulkers.Fhulkers
-api-version: '1.21'
+api-version: '26.2'
+authors: [Noah Broyles]
+website: https://github.com/noahbroyles/Fhulkers
 description: Adds the Fhulker, a 54-slot shulker box crafted from a shulker box surrounded by copper ingots.
