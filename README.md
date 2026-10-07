@@ -8,7 +8,7 @@ Surround any shulker box with 8 copper ingots:
 
 ![Fhulker crafting recipe: a shulker box surrounded by 8 copper ingots](docs/crafting.png)
 
-The result is that same box upgraded into a Fhulker. It keeps its color, custom name, and any items already inside. The recipe is unlocked for players when they join.
+The result is that same box upgraded into a Fhulker. It keeps its color, custom name, and any items already inside. The recipe appears in the recipe book once a player first holds a shulker box. It works in the crafting grid either way.
 
 Notes:
 
