@@ -118,3 +118,37 @@ jobs:
             -F "versionUpload=<versionUpload.json;type=application/json" \
             -F "files=@target/Fhulkers-$VERSION.jar;type=application/java-archive" \
             | jq -r '"Published to Hangar: " + .url'
+
+      # Replaces the whole Hangar project page. Edits made in Hangar's web editor are overwritten.
+      - name: Update Hangar project page
+        env:
+          HANGAR_API_KEY: ${{ secrets.HANGAR_API_KEY }}
+          HANGAR_PROJECT: ${{ vars.HANGAR_PROJECT || 'Fhulkers' }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$HANGAR_API_KEY" ]; then
+            echo "::notice::HANGAR_API_KEY is not set; skipping the Hangar page update."
+            exit 0
+          fi
+          api=https://hangar.papermc.io/api/v1
+
+          # Everything above "## Development" (players' docs, not build notes), minus the
+          # title Hangar already shows. Relative images point at this release's tag on GitHub.
+          # (They only load once the repository is public.)
+          raw="https://raw.githubusercontent.com/$GITHUB_REPOSITORY/v$VERSION"
+          awk '/^## Development/ { exit } { print }' README.md \
+            | sed -e '1{/^# /d}' -e "s#](docs/#]($raw/docs/#g" > page.md
+          if [ ! -s page.md ]; then
+            echo "::error::README produced an empty Hangar page"
+            exit 1
+          fi
+          jq -n --rawfile content page.md '{content: $content}' > page.json
+
+          token=$(curl -fsS -X POST --url-query "apiKey=$HANGAR_API_KEY" "$api/authenticate" | jq -er .token)
+          echo "::add-mask::$token"
+
+          curl -fsS -X PATCH "$api/pages/editmain/$HANGAR_PROJECT" \
+            -H "Authorization: HangarAuth $token" \
+            -H "Content-Type: application/json" \
+            --data @page.json > /dev/null
+          echo "Updated the Hangar project page."
