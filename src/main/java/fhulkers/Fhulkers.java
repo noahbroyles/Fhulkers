@@ -1,5 +1,7 @@
 package fhulkers;
 
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import io.papermc.paper.event.block.BlockBreakBlockEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -451,9 +453,9 @@ public final class Fhulkers extends JavaPlugin implements Listener {
         if (extra != null) writeExtra(pdc, extra);
 
         int used = 0;
-        if (m instanceof BlockStateMeta bsm && bsm.hasBlockState()
-                && bsm.getBlockState() instanceof ShulkerBox box) {
-            for (ItemStack i : box.getInventory().getContents()) if (!isEmpty(i)) used++;
+        ItemContainerContents held = s.getData(DataComponentTypes.CONTAINER);
+        if (held != null) {
+            for (ItemStack i : held.contents()) if (!isEmpty(i)) used++;
         }
         ItemStack[] stored = readExtra(pdc);
         for (int i = 0; i < stored.length && VANILLA + i < SIZE; i++) if (!isEmpty(stored[i])) used++;
